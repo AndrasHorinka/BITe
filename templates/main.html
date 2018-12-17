@@ -1,0 +1,189 @@
+{% extends 'frame.html' %}
+
+{% block content %}
+
+{#*********************************************#}
+{#**************** Latest News ****************#}
+{#*********************************************#}
+<div class="container-fluid mt-3">
+    {% if news|length > 0 %}
+        <div class="row mb-1">
+            <div class="col">
+                <button class="btn bg-primary btn-block font-weight-bold text-light">
+                    News
+                </button>
+            </div>
+        </div>
+        {% for info in news %}
+        <div class="row">
+            <div class="col-md-1 mb-2">
+                {% if info.get('parameters').items()|length > 0 %}
+                    <a href="{{ url_for(info.get('url'), **info.get('parameters')) }}" class="btn btn-warning btn-sm font-weight-bold" role="button">
+                        check it
+                    </a>
+                {% else %}
+                    <a href="{{ url_for(info.get('url')) }}" class="btn btn-warning btn-sm font-weight-bold" role="button">
+                        check it
+                    </a>
+                {% endif %}
+            </div>
+            <div class="col-md-11 font-weight-bold">
+                {{ info.get('message') }}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{#***********************************************#}
+{#****************** DASHBOARD ******************#}
+{#***********************************************#}
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col">
+            <button class="btn bg-primary btn-block font-weight-bold text-light">
+                Dashboard
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <table class="table table-borderless table-light">
+                <tr class="font-weight-bold">
+                    <th>
+                    </th>
+                    <th>
+                        Total
+                    </th>
+                    <th>
+                        Current week
+                    </th>
+                    <th>
+                        Next two weeks
+                    </th>
+                    <th>
+                        Next four weeks
+                    </th>
+                </tr>
+
+                <tr>
+                    <td colspan="5" class="p-0">
+                        <hr class="m-0">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="font-weight-bold">
+                        Number of BIs
+                    </td>
+                    <td>
+                        {{ dashboard.get('nr_of_bi').get('total') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('nr_of_bi').get('current_week') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('nr_of_bi').get('next_two_weeks') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('nr_of_bi').get('next_four_weeks') }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="font-weight-bold">
+                        Submitted volume
+                    </td>
+                    <td>
+                        {{ dashboard.get('submitted_volume').get('total') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('submitted_volume').get('current_week') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('submitted_volume').get('next_two_weeks') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('submitted_volume').get('next_four_weeks') }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="font-weight-bold">
+                        Unique customers
+                    </td>
+                    <td>
+                        {{ dashboard.get('unique_customers').get('total') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('unique_customers').get('current_week') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('unique_customers').get('next_two_weeks') }}
+                    </td>
+                    <td>
+                        {{ dashboard.get('unique_customers').get('next_four_weeks') }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{#**********************************************#}
+{#****************** Accuracy ******************#}
+{#**********************************************#}
+<div class="container-fluid mt-3">
+    <div class="row mb-1">
+        <div class="col">
+            <button class="btn bg-primary btn-block font-weight-bold text-light">
+                Accuracy
+            </button>
+        </div>
+    </div>
+    <div class="row justify-content-between">
+        <div class="col-md-4">
+            <div class="btn-toolbar" role="toolbar" aria-label="Country selector with nested dropdown">
+                <div class="btn-group mr-2" role="group">
+                    {% for cluster in countries.get('primary') %}
+                        <button type="button" class="btn btn-sm">
+                            {{ cluster }}
+                        </button>
+                    {% endfor %}
+
+                    <div class="btn-group" role="group">
+                        <button id="btnCyDrop" type="button" class="btn btn-sm dropdown-toggle btn-warning" data-togle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Countries
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="btnCyDrop">
+                            {% for country in countries.get('secondary') %}
+                                <a class="dropdown-item" href="#">
+                                    {{ country }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="btn-toolbar" role="toolbar" aria-label="weeks-back-selector">
+                <div class="btn-group ml-2" role="group" aria-label="weeks-back-selector-group">
+                    {% for week in week_backs %}
+                        <button type="button" class="btn btn-sm">
+                            {{ week }}
+                        </button>
+                    {% endfor %}
+                    <button type="button" class="btn btn-s btn-warning">
+                        weeks back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    Accuracy content here
+</div>
+
+{% endblock %}
