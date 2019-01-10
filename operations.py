@@ -2,7 +2,7 @@ from flask import request
 import db_queries
 import connection
 import calculations
-import converter
+
 
 def sample_fill_geographies():
     geos = connection.read_file('/sql_setup/geography_sample.csv')
@@ -14,26 +14,6 @@ def sample_fill_customers():
     customers = connection.read_file('/sql_setup/customer_map_sample.csv')
     for customer in customers:
         db_queries.fill_customer(customer)
-
-
-def sample_fill_optima():
-    optimas = connection.read_file('/sql_setup/optima_sample.csv')
-    version = calculations.define_date_of_monday()
-    for optima in optimas:
-        db_queries.fill_optima(optima, version)
-
-
-def sample_fill_product():
-    products = connection.read_file('/sql_setup/productmap_baby_sample.csv')
-    for product in products:
-        db_queries.fill_product(product)
-
-
-def sample_fill_shipment():
-    shipments = connection.read_file('/sql_setup/shipment_sample.csv')
-    for shipment in shipments:
-        db_queries.fill_shipment(shipment)
-
 
 
 def feed_main_page_dashboard():
@@ -77,61 +57,139 @@ def feed_main_page_countries():
     geographies = db_queries.get_countries_and_clusters()
     all_geos = list()
     for geo in geographies:
-        for key, values in enumerate(geo):
+        for values in geo.values():
             all_geos.append(values)
 
-    return list(set(all_geos.sort()))
+    all_geos.sort()
+    return list(set(all_geos))
 
 
-def get_bi_accuracy(category='*', country='*', customer='*', lineup='*', start_date=(2000, 1, 1), end_date=None, weeks_back=1):
-    """ Returns a list of % integers for BI % Accuracy. All arguments are optional - if any of them are omitted -> total Univerese is considered.
-    Arguments:
-        category: string - representing a CATEGORY within PRODUCTS database.
-        country: string - representing COUNTRY within CUSTOMER database.
-        customer: string - representing CUSTOMER_NORM_NAME within CUSTOMER database.
-        lineup: string - representing FAMILY3 within PRODUCTS database. --> SEE ISSUE TRACKING!
-        start_date: tuple - (year, month, day)
-        end_date: tuple - (year, month, day)
-        weeks_back: integer - default 1 weeks back
-    Returns:
-        accuracy: list of floats (ie. 54.30)
-    """
-    ship_query = db_queries.get_shipment(category='*', country='*', customer='*', lineup='*',
-                                         start_date=('2000', '01', '01'), end_date=('9999', '12', '31'))
-    shipments = converter.convert_dict_in_lists_to_list(ship_query)
-
-    def send_proper_bi_query(bi_query):
-        das = converter.convert_dict_in_lists_to_list(bi_query)
-        accuracy = calculations.calculate_bi_accuracy(shipments, das)
-        return accuracy
-
-    if end_date:
-        bi_query = db_queries.get_submitted_da_volume(start_date, category=category, country=country, customer=customer,
-                                                      lineup=lineup, end_date=end_date, weeks_back=weeks_back)
-        return send_proper_bi_query(bi_query)
-
-    bi_query = db_queries.get_submitted_da_volume(start_date, category=category, country=country, customer=customer,
-                                                  lineup=lineup, weeks_back=weeks_back)
-    return send_proper_bi_query(bi_query)
+def maintain_geopgraphy():
+    return db_queries.get_all_geographies()
 
 
-def add_new_bi():
-    """ Adds a new line into DA table. da_details = request.form
-    Arguments:
-        da_details: a dictionary with the elements of a DA (da_name, status, da_group, country, da_description,
-        da_ long_descr, fm, da_type_lvl1, da_type_lvl2, da_type_lvl3, periodicity, cpg, product_category, product_level,
-        product_code, cust_dimension, customer_name, start_date, end_date, nr_of_periods, cust_start_date,
-        cust_end_date, unit_of_measure, location, created, submitted, last_updated and weekly volume."""
+def maintain_customer():
+    return db_queries.get_all_customers()
 
-    keys = ['da_name', 'status', 'da_group', 'country', 'da_description',
-            'da_long_descr', 'fm', 'da_type_lvl1', 'da_type_lvl2', 'da_type_lvl3', 'periodicity', 'cpg',
-            'product_category', 'product_level',
-            'product_code', 'cust_dimension', 'customer_name', 'start_date', 'end_date', 'nr_of_periods',
-            'cust_start_date',
-            'cust_end_date', 'unit_of_measure', 'location', 'created', 'submitted', 'last_updated']
-    da = dict()
-    for key in keys:
-        if key in request:
-            da['key'] = request.form['key']
 
-    db_queries.add_new_bi(da)
+def maintain_category():
+    return db_queries.get_all_categories()
+
+
+def maintain_brand():
+    return db_queries.get_all_brands()
+
+
+def maintain_optima_lineup():
+    return db_queries.get_all_optima_lineups()
+
+
+def maintain_family3():
+    return db_queries.get_all_family3()
+
+
+def maintain_SKU():
+    return db_queries.get_all_FPCs()
+
+
+def maintain_da_level_type():
+    return db_queries.get_all_da_level_types()
+
+
+def maintain_da_periodicity():
+    return db_queries.get_all_da_periodicity()
+
+
+def maintain_da_status():
+    return db_queries.get_all_da_status()
+
+
+def maintain_CPG():
+    return db_queries.get_all_cpg()
+
+
+def load_optima(filename):
+    raw_optima = connection.read_file(filename)  # list of dictionaries
+
+    def are_all_keys_included(promo_entry):
+        MUST_HAVE_KEYS = ['country', 'customer', 'line_up', 'promo_id', 'promo_start', 'promo_end', 'sos', 'eos',
+                          'volume']
+        for key in MUST_HAVE_KEYS:
+            if key not in promo_entry.keys():
+                return False
+
+        return True
+
+    for entry in raw_optima:
+        print(entry)
+        if not are_all_keys_included(entry):
+            return False
+
+        promo_id = entry.get('promo_id')
+        print(promo_id)
+        line_up = entry.get('line_up')
+
+        # convert country string into country ID
+        country = entry.get('country')
+        db_country = db_queries.get_country_id_by_optima_name(country)
+        if not len(db_country) == 1:
+            print("no CountryID found")
+            return False
+        entry['country'] = db_country.get('country_id')
+
+        # convert customer string into customer ID
+        customer = entry.get('customer')
+        db_customer = db_queries.get_customer_id_by_optima_name(customer, entry.get('country'))
+        if not len(db_customer) == 1:
+            print("No CustomerID found")
+            return False
+        entry['customer'] = db_customer.get('customer_id')
+
+        # convert lineup string into line_up ID
+        lineup = entry.get('line_up')
+        db_lineup = db_queries.get_lineup_id_by_optima_name(lineup)
+        if not len(db_lineup) == 1:
+            print("No Optima Lineup ID found")
+            return False
+        entry['line_up'] = db_lineup.get('optima_lineup_id')
+
+        # converting sos to Monday of given week
+        sos = entry.get('sos')
+        sos_day = sos[3:5]
+        sos_month = sos[0:3]
+        sos_year = sos[5:]
+        datetime_sos = calculations.define_date_of_monday((sos_year, sos_month, sos_day), 1)
+        sos = datetime_sos.get('start_date')
+        entry['sos'] = sos
+
+        # converting eos to Monday of given week
+        eos = entry.get('eos')
+        eos_day = eos[3:5]
+        eos_month = eos[0:3]
+        eos_year = eos[5:]
+        datetime_eos = calculations.define_date_of_monday((eos_year, eos_month, eos_day), 1)
+        eos = datetime_eos.get('start_date')
+        entry['eos'] = eos
+
+        vol = int(entry.get('volume'))
+        is_promo_already_stored = db_queries.is_optima_input_already_in(promo_id, line_up, sos, eos, vol)
+
+        if len(is_promo_already_stored) == 0:
+            db_queries.add_new_optima_promo(entry)
+
+
+
+
+
+
+
+    # 1. check if all keys are are_all_keys_included() - done
+    # 1b. convert all dates in each part into a datetime object
+    # optima raw date format is: MM/DD/YYYY --> thus MDY mode is needed and no convertion is needed
+    # 1c. convert all dataset into data_id -- done
+    # 2. for each line check if it already exists or not? -- done
+    # 2a. if it doesnt exists, add with current date --> it is set to default, done
+
+    # 2b. if it exists, check if the time/volume got changed
+    # 2c. if time/volume did not change - continue
+    # 2d. if there is a change -

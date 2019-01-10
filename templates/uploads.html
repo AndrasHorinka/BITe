@@ -1,0 +1,44 @@
+{% extends 'frame.html' %}
+
+{% block content %}
+
+    <div class="container-fluid mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="list-group">
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <li class="list-group-item list-group-item-danger">{{ message }}</li>
+                    {% elif category == 'success'  %}
+                        <li class="list-group-item list-group-item-success">{{ message }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <dl class="row mb-1">
+            <form method="POST" enctype=multipart/form-data>
+                <dt class="col-3">
+                    Optima
+                </dt>
+                <dd class="col-9 custom-file">
+                    <input type="file" name="optima" class="custom-file-input" id="optimaUpload">
+                    <label class="custom-file-label" for="customFile">Choose file</label>
+                </dd>
+                <button type="submit" class="btn btn-outline-success font-weight-bold">Upload</button>
+            </form>
+        </dl>
+        <dl class="row mb-1">
+            <form method="POST" enctype=multipart/form-data>
+                <dt class="col-3">
+                    Shipment
+                </dt>
+                <dd class="col-9 custom-file">
+                    <input type="file" name="shipment" class="custom-file-input" id="shipmentUpload">
+                    <label class="custom-file-label" for="customFile">Choose file</label>
+                </dd>
+                <button type="submit" class="btn btn-outline-success font-weight-bold">Upload</button>
+            </form>
+        </dl>
+    {% endwith %}
+    </div>
+{% endblock %}

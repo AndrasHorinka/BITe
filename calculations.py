@@ -2,7 +2,7 @@ import datetime
 import numpy
 
 
-def define_date_of_monday(date=None, weeks=1):
+def define_date_of_monday(date=(), weeks=1):
     """ Returns the date of Monday of the given week. Both arguments are optional.
     Arguments:
         date: a tuple of (year,month,day). If omitted it takes today's date as argument.
@@ -11,9 +11,9 @@ def define_date_of_monday(date=None, weeks=1):
     """
     def calculate_date(year, month, day):
         given_date = datetime.datetime(year, month, day)
-        this_date = given_date - datetime.timedelta(days=given_date.weekday())
-        next_date = this_date + datetime.timedelta(days=weeks * 7)
-        return {'start_date': this_date, 'end_date': next_date}
+        start_monday = given_date - datetime.timedelta(days=given_date.weekday())
+        last_monday = start_monday + datetime.timedelta(days=weeks * 7)
+        return {'start_date': start_monday, 'end_date': last_monday}
 
     if date:
         return calculate_date(int(date[0]), int(date[1]), int(date[2]))

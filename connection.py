@@ -4,22 +4,21 @@ import psycopg2
 import psycopg2.extras
 from csv import DictReader, DictWriter
 import os
-import datetime
 
 
 def read_file(filename):
     """
         Reads the questions from the file.
         Arguments:
-            None
+            path/filename
         Returns:
-            list of dictionaries of the questions
+            list of dictionaries of the file
     """
     with open(filename , 'r', newline='', encoding='utf-8') as csvfile:
-        questions = list(DictReader(csvfile))
-        # for dictionary in questions:
+        saved_file = list(DictReader(csvfile))
+        # for dictionary in saved_file:
         #     dictionary['submission_time'] = datetime.datetime.utcfromtimestamp(float(dictionary['submission_time'])).strftime('%Y %b %w %A - %H:%M')
-        return questions
+        return saved_file
 
 
 

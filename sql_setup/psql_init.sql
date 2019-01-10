@@ -12,9 +12,7 @@ ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk3_da_status CAS
 ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk4_da_version CASCADE;
 ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk5_da_period CASCADE;
 ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk6_da_category CASCADE;
-ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk7_da_prod_level CASCADE;
-ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk8_da_prod_code CASCADE;
-ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk9_da_da_type CASCADE;
+ALTER TABLE IF EXISTS ONLY public.da DROP CONSTRAINT IF EXISTS fk7_da_da_type CASCADE;
 
 ALTER TABLE IF EXISTS ONLY public.gpdb_optima_lineup DROP CONSTRAINT IF EXISTS fk1_da_brand CASCADE;
 ALTER TABLE IF EXISTS ONLY public.gpdb_optima_lineup DROP CONSTRAINT IF EXISTS fk2_da_category CASCADE;
@@ -41,9 +39,7 @@ ALTER TABLE IF EXISTS ONLY public.gpdb_optima_lineup DROP CONSTRAINT IF EXISTS p
 ALTER TABLE IF EXISTS ONLY public.gpdb_family_three DROP CONSTRAINT IF EXISTS pk_family_three CASCADE;
 ALTER TABLE IF EXISTS ONLY public.gpdb_brand DROP CONSTRAINT IF EXISTS pk_brand CASCADE;
 ALTER TABLE IF EXISTS ONLY public.gpdb_category DROP CONSTRAINT IF EXISTS pk_category CASCADE;
-ALTER TABLE IF EXISTS ONLY public.da_product_type DROP CONSTRAINT IF EXISTS pk_da_type CASCADE;
-ALTER TABLE IF EXISTS ONLY public.da_product_code DROP CONSTRAINT IF EXISTS pk_prod_code CASCADE;
-ALTER TABLE IF EXISTS ONLY public.da_product_level DROP CONSTRAINT IF EXISTS pk_prod_level CASCADE;
+ALTER TABLE IF EXISTS ONLY public.da_level_type DROP CONSTRAINT IF EXISTS pk_da_type CASCADE;
 ALTER TABLE IF EXISTS ONLY public.da_periodicity DROP CONSTRAINT IF EXISTS pk_periodicity CASCADE;
 ALTER TABLE IF EXISTS ONLY public.da_version DROP CONSTRAINT IF EXISTS pk_da_version CASCADE;
 ALTER TABLE IF EXISTS ONLY public.da_status DROP CONSTRAINT IF EXISTS pk_da_status CASCADE;
@@ -57,9 +53,7 @@ DROP SEQUENCE IF EXISTS public.gpdb_optima_lineup_optima_lineup_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS public.gpdb_family_three_family_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS public.gpdb_brand_brand_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS public.gpdb_category_category_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS public.da_product_type_da_type_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS public.da_product_code_da_product_code_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS public.da_product_level_da_product_level_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS public.da_level_type_da_type_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS public.da_periodicity_da_period_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS public.da_version_da_version_flag_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS public.da_status_da_status_id_seq CASCADE;
@@ -73,9 +67,7 @@ DROP TABLE IF EXISTS public.gpdb_optima_lineup;
 DROP TABLE IF EXISTS public.gpdb_family_three;
 DROP TABLE IF EXISTS public.gpdb_brand;
 DROP TABLE IF EXISTS public.gpdb_category;
-DROP TABLE IF EXISTS public.da_product_type;
-DROP TABLE IF EXISTS public.da_product_code;
-DROP TABLE IF EXISTS public.da_product_level;
+DROP TABLE IF EXISTS public.da_level_type;
 DROP TABLE IF EXISTS public.da_periodicity;
 DROP TABLE IF EXISTS public.da_version;
 DROP TABLE IF EXISTS public.da_status;
@@ -139,7 +131,7 @@ CREATE TABLE da (
 	cpg INTEGER NOT NULL,
 	product_category_id INTEGER NOT NULL,
 	product_level INTEGER NOT NULL,
-	product_code INTEGER NOT NULL,
+	product_code VARCHAR(255) NOT NULL,
 	da_customer_id INTEGER NOT NULL,
 	start_date DATE NOT NULL,
 	end_date DATE NOT NULL,
@@ -154,7 +146,7 @@ CREATE TABLE da (
 
 CREATE TABLE gpdb_optima_lineup (
 	optima_lineup_id SERIAL NOT NULL,
-	optima_lineup_desc VARCHAR(120) NOT NULL,
+	optima_lineup_desc VARCHAR(120) NOT NULL UNIQUE,
 	category_id INTEGER NOT NULL,
 	brand_id INTEGER NOT NULL);
 
@@ -179,29 +171,21 @@ CREATE TABLE gpdb_category (
 	s1_category_desc VARCHAR(120) NOT NULL,
 	sap_category_desc VARCHAR(120) NOT NULL);
 
-CREATE TABLE da_product_type (
+CREATE TABLE da_level_type (
 	da_type_id SERIAL NOT NULL,
 	da_type_lvl1 VARCHAR(150) NOT NULL,
 	da_type_lvl2 VARCHAR(150),
 	da_type_lvl3 VARCHAR(150));
 
-CREATE TABLE da_product_code (
-	da_product_code_id SERIAL NOT NULL,
-	da_product_code_desc VARCHAR(150) NOT NULL);
-
-CREATE TABLE da_product_level (
-	da_product_level_id SERIAL NOT NULL,
-	da_product_level_desc VARCHAR(80));
-
 CREATE TABLE da_periodicity (
 	da_period_id SERIAL NOT NULL,
 	da_periodicity_name VARCHAR(100) NOT NULL DEFAULT 'weekly');
 
-CREATE TABLE da_version (
+CREATE TABLE da_version ( -- it explains if it is the latest version or not (0 is the latest)
 	da_version_flag_id SERIAL NOT NULL,
 	da_version_flag VARCHAR(2) NOT NULL);
 
-CREATE TABLE da_status (
+CREATE TABLE da_status ( -- explains if it is draft/submitted/etc
 	da_status_id SERIAL NOT NULL,
 	da_status_name VARCHAR(100) NOT NULL DEFAULT 'draft');
 
@@ -224,7 +208,7 @@ CREATE TABLE shipments (
 	shipment INTEGER NOT NULL);
 
 CREATE TABLE optima (
-  version DATE NOT NULL,
+  version DATE DEFAULT CURRENT_DATE,
 	country INTEGER NOT NULL,
 	customer INTEGER NOT NULL,
 	line_up INTEGER NOT NULL,
@@ -233,7 +217,8 @@ CREATE TABLE optima (
 	promo_end DATE NOT NULL,
 	sos DATE NOT NULL,
 	eos DATE NOT NULL,
-	volume FLOAT(20));
+	volume FLOAT(20),
+	status boolean DEFAULT NULL);
 
 
 ALTER TABLE ONLY products ADD CONSTRAINT pk_products PRIMARY KEY (fpc);
@@ -244,9 +229,7 @@ ALTER TABLE ONLY gpdb_optima_lineup ADD CONSTRAINT pk_optima_lineup PRIMARY KEY 
 ALTER TABLE ONLY gpdb_family_three ADD CONSTRAINT pk_family_three PRIMARY KEY (family_id);
 ALTER TABLE ONLY gpdb_brand ADD CONSTRAINT pk_brand PRIMARY KEY (brand_id);
 ALTER TABLE ONLY gpdb_category ADD CONSTRAINT pk_category PRIMARY KEY (category_id);
-ALTER TABLE ONLY da_product_type ADD CONSTRAINT pk_da_type PRIMARY KEY (da_type_id);
-ALTER TABLE ONLY da_product_code ADD CONSTRAINT pk_prod_code PRIMARY KEY (da_product_code_id);
-ALTER TABLE ONLY da_product_level ADD CONSTRAINT pk_prod_level PRIMARY KEY (da_product_level_id);
+ALTER TABLE ONLY da_level_type ADD CONSTRAINT pk_da_type PRIMARY KEY (da_type_id);
 ALTER TABLE ONLY da_periodicity ADD CONSTRAINT pk_periodicity PRIMARY KEY (da_period_id);
 ALTER TABLE ONLY da_version ADD CONSTRAINT pk_da_version PRIMARY KEY (da_version_flag_id);
 ALTER TABLE ONLY da_status ADD CONSTRAINT pk_da_status PRIMARY KEY (da_status_id);
@@ -267,9 +250,7 @@ ALTER TABLE ONLY da ADD CONSTRAINT fk3_da_status FOREIGN KEY (da_status_id) REFE
 ALTER TABLE ONLY da ADD CONSTRAINT fk4_da_version FOREIGN KEY (version_flag_id) REFERENCES da_version(da_version_flag_id);
 ALTER TABLE ONLY da ADD CONSTRAINT fk5_da_period FOREIGN KEY (period_id) REFERENCES da_periodicity(da_period_id);
 ALTER TABLE ONLY da ADD CONSTRAINT fk6_da_category FOREIGN KEY (product_category_id) REFERENCES gpdb_category(category_id);
-ALTER TABLE ONLY da ADD CONSTRAINT fk7_da_prod_level FOREIGN KEY (product_level) REFERENCES da_product_level(da_product_level_id);
-ALTER TABLE ONLY da ADD CONSTRAINT fk8_da_prod_code FOREIGN KEY (product_code) REFERENCES da_product_code(da_product_code_id);
-ALTER TABLE ONLY da ADD CONSTRAINT fk9_da_da_type FOREIGN KEY (da_type) REFERENCES da_product_type(da_type_id);
+ALTER TABLE ONLY da ADD CONSTRAINT fk7_da_da_type FOREIGN KEY (da_type) REFERENCES da_level_type(da_type_id);
 
 ALTER TABLE ONLY gpdb_optima_lineup ADD CONSTRAINT fk1_da_brand FOREIGN KEY (brand_id) REFERENCES gpdb_brand(brand_id);
 ALTER TABLE ONLY gpdb_optima_lineup ADD CONSTRAINT fk2_da_category FOREIGN KEY (category_id) REFERENCES gpdb_category(category_id);
